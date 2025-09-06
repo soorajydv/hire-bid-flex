@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAppDispatch } from '../hooks/useAppDispatch';
+import { useAppSelector } from '../hooks/useAppSelector';
+import { fetchJobs, setCurrentPage } from '../store/slices/jobsSlice';
 import { Navbar } from "@/components/navigation/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { JobFilters } from "@/components/filters/JobFilters";
+import { Pagination } from "@/components/pagination/Pagination";
+import { PlaceBidModal } from "@/components/bids/PlaceBidModal";
 import { 
   Search, 
   MapPin, 
   Clock, 
   Star, 
-  Filter,
   Briefcase,
   DollarSign 
 } from "lucide-react";
@@ -54,7 +59,26 @@ const mockJobs = [
 
 const Jobs = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedJob, setSelectedJob] = useState(null);
+  const dispatch = useAppDispatch();
+  const { jobs, loading, filters, pagination } = useAppSelector((state) => state.jobs);
+
+  useEffect(() => {
+    dispatch(fetchJobs({ page: pagination.currentPage, filters }));
+  }, [dispatch, pagination.currentPage, filters]);
+
+  const handleApplyFilters = () => {
+    dispatch(setCurrentPage(1));
+    dispatch(fetchJobs({ page: 1, filters }));
+  };
+
+  const handlePageChange = (page: number) => {
+    dispatch(setCurrentPage(page));
+  };
+
+  const handlePlaceBid = (job: any) => {
+    setSelectedJob(job);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,10 +109,7 @@ const Jobs = () => {
                 />
               </div>
               <div className="flex gap-3">
-                <Button variant="outline" className="whitespace-nowrap">
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filters
-                </Button>
+                <JobFilters onApplyFilters={handleApplyFilters} />
                 <Button variant="hero">
                   <Search className="w-4 h-4 mr-2" />
                   Search
@@ -99,7 +120,17 @@ const Jobs = () => {
 
           {/* Job Listings */}
           <div className="space-y-6">
-            {mockJobs.map((job) => (
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-muted-foreground">Loading jobs...</p>
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No jobs found matching your criteria.</p>
+              </div>
+            ) : (
+              jobs.map((job) => (
               <div key={job.id} className="card-job group">
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                   {/* Job Info */}
@@ -133,7 +164,7 @@ const Jobs = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        <span>{job.postedTime}</span>
+                        <span>{new Date(job.postedAt).toLocaleDateString()}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Briefcase className="w-4 h-4" />
@@ -141,7 +172,7 @@ const Jobs = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 fill-current text-yellow-500" />
-                        <span>{job.rating}</span>
+                        <span>4.8</span>
                       </div>
                     </div>
                   </div>
@@ -151,27 +182,45 @@ const Jobs = () => {
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-lg font-semibold text-primary">
                         <DollarSign className="w-4 h-4" />
-                        {job.budget}
+                        ${job.budget.min} - ${job.budget.max}
                       </div>
                       <p className="text-xs text-muted-foreground">Budget range</p>
                     </div>
-                    <Button variant="hero" className="whitespace-nowrap">
+                    <Button 
+                      variant="hero" 
+                      className="whitespace-nowrap"
+                      onClick={() => handlePlaceBid(job)}
+                    >
                       Place Bid
                     </Button>
                   </div>
                 </div>
-              </div>
-            ))}
+                </div>
+              ))
+            )}
           </div>
 
-          {/* Load More */}
-          <div className="text-center py-12">
-            <Button variant="outline" size="lg">
-              Load More Jobs
-            </Button>
-          </div>
+          {/* Pagination */}
+          {!loading && jobs.length > 0 && (
+            <div className="py-8">
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
         </div>
       </main>
+
+      {/* Place Bid Modal */}
+      {selectedJob && (
+        <PlaceBidModal
+          job={selectedJob}
+          isOpen={!!selectedJob}
+          onClose={() => setSelectedJob(null)}
+        />
+      )}
     </div>
   );
 };

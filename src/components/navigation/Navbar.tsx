@@ -1,13 +1,30 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAppDispatch } from '../../hooks/useAppDispatch';
+import { useAppSelector } from '../../hooks/useAppSelector';
+import { logout } from '../../store/slices/authSlice';
 import { Button } from "@/components/ui/button";
-import { Menu, X, Briefcase, User, PlusCircle } from "lucide-react";
+import { Menu, X, Briefcase, User, PlusCircle, LogOut } from "lucide-react";
+import { NotificationCenter } from '../notifications/NotificationCenter';
+import { toast } from '@/hooks/use-toast';
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    await dispatch(logout());
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully.",
+    });
+    navigate('/');
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
@@ -49,14 +66,31 @@ export const Navbar = () => {
             </Link>
           </div>
 
-          {/* Desktop Auth Buttons */}
+          {/* Desktop Auth/User Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">Sign In</Link>
-            </Button>
-            <Button variant="hero" size="sm" asChild>
-              <Link to="/register">Get Started</Link>
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <NotificationCenter />
+                {user?.role === 'admin' && (
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/admin">Admin</Link>
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/login">Sign In</Link>
+                </Button>
+                <Button variant="hero" size="sm" asChild>
+                  <Link to="/signup">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -94,18 +128,44 @@ export const Navbar = () => {
                 Dashboard
               </Link>
               <div className="pt-4 pb-2 border-t space-y-2">
-                <Button variant="ghost" className="w-full justify-start" asChild>
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                    <User className="w-4 h-4 mr-2" />
-                    Sign In
-                  </Link>
-                </Button>
-                <Button variant="hero" className="w-full justify-start" asChild>
-                  <Link to="/register" onClick={() => setIsMenuOpen(false)}>
-                    <PlusCircle className="w-4 h-4 mr-2" />
-                    Get Started
-                  </Link>
-                </Button>
+                {isAuthenticated ? (
+                  <>
+                    {user?.role === 'admin' && (
+                      <Button variant="ghost" className="w-full justify-start" asChild>
+                        <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
+                          <User className="w-4 h-4 mr-2" />
+                          Admin Panel
+                        </Link>
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start" 
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="ghost" className="w-full justify-start" asChild>
+                      <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                        <User className="w-4 h-4 mr-2" />
+                        Sign In
+                      </Link>
+                    </Button>
+                    <Button variant="hero" className="w-full justify-start" asChild>
+                      <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
+                        <PlusCircle className="w-4 h-4 mr-2" />
+                        Get Started
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

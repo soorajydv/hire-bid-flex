@@ -18,6 +18,17 @@ import {
 } from "lucide-react";
 
 const Dashboard = () => {
+  const dispatch = useAppDispatch();
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { myJobs } = useAppSelector((state) => state.jobs);
+  const { myBids } = useAppSelector((state) => state.bids);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchMyJobs());
+      dispatch(fetchMyBids());
+    }
+  }, [dispatch, isAuthenticated]);
   const [activeView, setActiveView] = useState("overview");
 
   // Mock data

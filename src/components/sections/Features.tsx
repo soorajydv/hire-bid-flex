@@ -47,7 +47,7 @@ const features = [
 
 export const Features = () => {
   return (
-    <section className="py-20 lg:py-32 bg-muted/30">
+    <section className="py-20 lg:py-32 bg-gradient-to-b from-background to-muted/20">
       <div className="container-mobile">
         <div className="text-center space-y-4 mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold">
@@ -65,7 +65,7 @@ export const Features = () => {
             return (
               <div
                 key={index}
-                className="card-elevated p-8 text-center group hover:scale-105 transition-all duration-300"
+                className="group relative p-8 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/20 hover:shadow-strong hover:border-primary/30 transition-all duration-500 hover:scale-105 hover:bg-card/80 text-center"
               >
                 <div className={`w-16 h-16 ${feature.bgColor} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className={`w-8 h-8 ${feature.color}`} />

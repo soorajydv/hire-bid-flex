@@ -5,20 +5,16 @@ import { fetchMyJobs } from "@/store/slices/jobsSlice";
 import { fetchMyBids } from "@/store/slices/bidsSlice";
 import { Navbar } from "@/components/navigation/Navbar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Briefcase, 
   Users, 
   DollarSign, 
-  TrendingUp,
-  MapPin,
-  Clock,
-  Star,
   Eye,
   MessageSquare,
   CheckCircle,
-  AlertCircle
+  Clock
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -34,18 +30,17 @@ const Dashboard = () => {
     }
   }, [dispatch, isAuthenticated]);
 
-  const [activeView, setActiveView] = useState("overview");
-
-  // Mock data
-  const stats = {
+  // Mock data for stats
+  const dashboardStats = {
     jobsPosted: 12,
     activeBids: 8,
     completedJobs: 25,
     totalEarnings: 2450
   };
 
-  const userJobs = jobs.filter(job => job.postedBy === 'user1'); // Mock current user ID
-  const userBids = bids;
+  // Filter jobs and bids for current user
+  const currentUserJobs = jobs.filter(job => job.postedBy === 'user1'); 
+  const currentUserBids = bids;
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,7 +65,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Jobs Posted</p>
-                    <p className="text-2xl font-bold text-primary">{stats.jobsPosted}</p>
+                    <p className="text-2xl font-bold text-primary">{dashboardStats.jobsPosted}</p>
                   </div>
                   <Briefcase className="w-8 h-8 text-primary" />
                 </div>
@@ -82,7 +77,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Active Bids</p>
-                    <p className="text-2xl font-bold text-accent">{stats.activeBids}</p>
+                    <p className="text-2xl font-bold text-accent">{dashboardStats.activeBids}</p>
                   </div>
                   <Users className="w-8 h-8 text-accent" />
                 </div>
@@ -94,7 +89,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                    <p className="text-2xl font-bold text-success">{stats.completedJobs}</p>
+                    <p className="text-2xl font-bold text-success">{dashboardStats.completedJobs}</p>
                   </div>
                   <CheckCircle className="w-8 h-8 text-success" />
                 </div>
@@ -106,7 +101,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Earnings</p>
-                    <p className="text-2xl font-bold text-success">${stats.totalEarnings}</p>
+                    <p className="text-2xl font-bold text-success">${dashboardStats.totalEarnings}</p>
                   </div>
                   <DollarSign className="w-8 h-8 text-success" />
                 </div>
@@ -117,8 +112,18 @@ const Dashboard = () => {
           {/* Main Content Tabs */}
           <Tabs defaultValue="my-jobs" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 bg-muted/20">
-              <TabsTrigger value="my-jobs" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">My Jobs (Hiring)</TabsTrigger>
-              <TabsTrigger value="my-bids" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">My Bids (Working)</TabsTrigger>
+              <TabsTrigger 
+                value="my-jobs" 
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                My Jobs (Hiring)
+              </TabsTrigger>
+              <TabsTrigger 
+                value="my-bids" 
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                My Bids (Working)
+              </TabsTrigger>
             </TabsList>
 
             {/* My Jobs Tab */}
@@ -129,7 +134,7 @@ const Dashboard = () => {
               </div>
 
               <div className="space-y-4">
-                {userJobs.map((job) => (
+                {currentUserJobs.map((job) => (
                   <Card key={job.id} className="card-elevated hover:shadow-strong transition-all duration-300 group">
                     <CardContent className="p-6">
                       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -144,7 +149,9 @@ const Dashboard = () => {
                             </span>
                             <span className="text-sm text-muted-foreground">{job.postedAt}</span>
                           </div>
-                          <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">{job.title}</h3>
+                          <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                            {job.title}
+                          </h3>
                           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Users className="w-4 h-4" />
@@ -184,7 +191,7 @@ const Dashboard = () => {
               </div>
 
               <div className="space-y-4">
-                {userBids.map((bid) => (
+                {currentUserBids.map((bid) => (
                   <Card key={bid.id} className="card-elevated hover:shadow-strong transition-all duration-300 group">
                     <CardContent className="p-6">
                       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -201,7 +208,9 @@ const Dashboard = () => {
                             </span>
                             <span className="text-sm text-muted-foreground">to Job #{bid.jobId}</span>
                           </div>
-                          <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">Job #{bid.jobId}</h3>
+                          <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                            Job #{bid.jobId}
+                          </h3>
                           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <DollarSign className="w-4 h-4" />

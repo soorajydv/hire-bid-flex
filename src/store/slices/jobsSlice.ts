@@ -7,7 +7,12 @@ export interface Job {
   description: string;
   category: string;
   location: string;
-  budget: { min: number; max: number };
+  budget: {
+    type: 'fixed' | 'hourly' | 'monthly';
+    min: number;
+    max: number;
+    rate?: number; // For hourly/monthly rates
+  };
   postedBy: string;
   postedAt: string;
   status: 'open' | 'in_progress' | 'completed' | 'cancelled';
@@ -25,6 +30,7 @@ interface JobsState {
   filters: {
     category: string;
     location: string;
+    budgetType: string;
     budgetMin: number;
     budgetMax: number;
     urgent: boolean;
@@ -45,6 +51,7 @@ const initialState: JobsState = {
   filters: {
     category: '',
     location: '',
+    budgetType: '',
     budgetMin: 0,
     budgetMax: 10000,
     urgent: false,

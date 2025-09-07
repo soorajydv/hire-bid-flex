@@ -1,41 +1,58 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../hooks/useAppDispatch';
-import { useAppSelector } from '../hooks/useAppSelector';
-import { signup, clearError } from '../store/slices/authSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Textarea } from '@/components/ui/textarea';
-import { Briefcase, Loader2 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "../store/store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PageLoader } from "@/components/ui/loading-spinner";
+import { Loader2, Briefcase, MapPin } from 'lucide-react';
+import { signup, clearError } from "../store/slices/authSlice";
+import { useToast } from "@/hooks/use-toast";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    location: '',
-    skills: '',
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    location: "",
+    coordinates: null as { lat: number; lng: number } | null
   });
-  const dispatch = useAppDispatch();
-  const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [locating, setLocating] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
+    
+    // Simulate initial page load
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     return () => {
-      dispatch(clearError());
+      if (error) {
+        dispatch(clearError());
+      }
     };
-  }, [dispatch]);
+  }, [error, dispatch]);
+
+  if (pageLoading) {
+    return <PageLoader message="Loading signup..." />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,35 +60,42 @@ const Signup = () => {
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Password mismatch",
-        description: "Passwords do not match. Please try again.",
+        description: "Passwords don't match!",
         variant: "destructive",
       });
       return;
     }
-    
+
+    if (formData.password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long!",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const skillsArray = formData.skills
-        .split(',')
-        .map(skill => skill.trim())
-        .filter(skill => skill.length > 0);
-      
-      await dispatch(signup({
+      const result = await dispatch(signup({
         name: formData.name,
         email: formData.email,
         password: formData.password,
         location: formData.location,
-        skills: skillsArray,
-      })).unwrap();
+        skills: []
+      }));
       
-      toast({
-        title: "Account created!",
-        description: "Welcome to HireNearby. Your account has been created successfully.",
-      });
-      navigate('/dashboard');
-    } catch (error: any) {
+      if (signup.fulfilled.match(result)) {
+        toast({
+          title: "Account created",
+          description: "Welcome to HireNearby!",
+        });
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Signup failed:', error);
       toast({
         title: "Signup failed",
-        description: error.message || "Please check your information and try again.",
+        description: "Please try again.",
         variant: "destructive",
       });
     }
@@ -84,8 +108,100 @@ const Signup = () => {
     }));
   };
 
+  const handleAutoLocate = async () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support geolocation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLocating(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Use Nominatim (OpenStreetMap) reverse geocoding - free service
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+            {
+              headers: {
+                'User-Agent': 'HireNearby-App'
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.display_name) {
+              setFormData(prev => ({
+                ...prev,
+                location: data.display_name,
+                coordinates: { lat: latitude, lng: longitude }
+              }));
+              
+              toast({
+                title: "Location found",
+                description: "Your location has been automatically detected.",
+              });
+            } else {
+              throw new Error('No address found');
+            }
+          } else {
+            throw new Error('Geocoding failed');
+          }
+        } catch (error) {
+          // Fallback: just use coordinates and a basic location format
+          setFormData(prev => ({
+            ...prev,
+            location: `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`,
+            coordinates: { lat: latitude, lng: longitude }
+          }));
+          
+          toast({
+            title: "Location detected",
+            description: "Location coordinates have been set. You can edit the address manually.",
+          });
+        }
+        
+        setLocating(false);
+      },
+      (error) => {
+        setLocating(false);
+        let message = "Unable to get your location.";
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = "Location access denied. Please enable location permissions.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "Location information unavailable.";
+            break;
+          case error.TIMEOUT:
+            message = "Location request timed out.";
+            break;
+        }
+        
+        toast({
+          title: "Location error",
+          description: message,
+          variant: "destructive",
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen  flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-12 h-12 gradient-primary rounded-lg flex items-center justify-center mb-4">
@@ -134,29 +250,38 @@ const Signup = () => {
             
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                name="location"
-                type="text"
-                value={formData.location}
-                onChange={handleInputChange}
-                placeholder="City, State"
-                required
-                disabled={loading}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="skills">Skills</Label>
-              <Textarea
-                id="skills"
-                name="skills"
-                value={formData.skills}
-                onChange={handleInputChange}
-                placeholder="e.g., Plumbing, Electrical, Design (comma-separated)"
-                rows={3}
-                disabled={loading}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="location"
+                  name="location"
+                  type="text"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  placeholder="City, State or full address"
+                  required
+                  disabled={loading || locating}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleAutoLocate}
+                  disabled={loading || locating}
+                  title="Auto-detect location"
+                >
+                  {locating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <MapPin className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              {formData.coordinates && (
+                <p className="text-xs text-muted-foreground">
+                  Coordinates: {formData.coordinates.lat.toFixed(4)}, {formData.coordinates.lng.toFixed(4)}
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">

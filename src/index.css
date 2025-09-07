@@ -82,33 +82,59 @@
   }
 
   .light {
+    /* Core Background & Text */
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
 
+    /* Cards & Surfaces */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
 
+    /* Popover */
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    --primary: 263 85% 65%;
+    /* Brand Colors - Same purple theme but adjusted for light mode */
+    --primary: 263 85% 65%;        /* Purple #8B5CF6 */
     --primary-foreground: 0 0% 100%;
+    --primary-light: 263 85% 90%;   /* Very light purple tint */
+    --primary-dark: 263 85% 45%;    /* Darker purple */
 
+    /* Accent - Electric Blue for highlights */
+    --accent: 217 91% 60%;          /* Electric Blue #3B82F6 */
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 217 91% 95%;    /* Very light blue */
+
+    /* Secondary - Light grays */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
 
+    /* Muted tones */
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 100%;
-
+    /* Success & Error */
+    --success: 142 71% 45%;         /* Green */
+    --success-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 263 85% 65%;
+    /* Borders & Inputs */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    /* Light mode specific gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(263 85% 65%), hsl(217 91% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(263 85% 65%) 0%, hsl(263 85% 75%) 50%, hsl(217 91% 75%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(240 4.8% 97%) 100%);
+
+    /* Light mode shadows */
+    --shadow-soft: 0 4px 20px -2px hsl(263 85% 65% / 0.15);
+    --shadow-medium: 0 10px 30px -5px hsl(263 85% 65% / 0.2);
+    --shadow-strong: 0 20px 40px -10px hsl(263 85% 65% / 0.25);
+
+    /* Sidebar colors */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -123,12 +149,194 @@
 @layer base {
   * {
     @apply border-border;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   }
 
   body {
     @apply bg-background text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Animated Background System */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    background: 
+      radial-gradient(circle at 20% 80%, hsl(263 85% 65% / 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, hsl(217 91% 60% / 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, hsl(263 85% 75% / 0.1) 0%, transparent 50%);
+    animation: backgroundFloat 20s ease-in-out infinite;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background-image: 
+      radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.15) 1px, transparent 0);
+    background-size: 40px 40px;
+    animation: dotPattern 30s linear infinite;
+    opacity: 0.3;
+  }
+
+  .light body::before {
+    background: 
+      radial-gradient(circle at 20% 80%, hsl(263 85% 65% / 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, hsl(217 91% 60% / 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, hsl(263 85% 75% / 0.05) 0%, transparent 50%);
+  }
+
+  .light body::after {
+    background-image: 
+      radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.08) 1px, transparent 0);
+    opacity: 0.2;
+  }
+
+  @keyframes backgroundFloat {
+    0%, 100% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    33% {
+      transform: translate(30px, -30px) rotate(120deg);
+    }
+    66% {
+      transform: translate(-20px, 20px) rotate(240deg);
+    }
+  }
+
+  @keyframes dotPattern {
+    0% {
+      transform: translate(0, 0);
+    }
+    100% {
+      transform: translate(40px, 40px);
+    }
+  }
+
+  /* Geometric shapes floating animation */
+  .geometric-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .geometric-shape {
+    position: absolute;
+    opacity: 0.1;
+    animation: float 15s ease-in-out infinite;
+  }
+
+  .geometric-shape:nth-child(1) {
+    top: 10%;
+    left: 10%;
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--accent)));
+    border-radius: 50%;
+    animation-delay: 0s;
+  }
+
+  .geometric-shape:nth-child(2) {
+    top: 60%;
+    right: 15%;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
+    transform: rotate(45deg);
+    animation-delay: -5s;
+  }
+
+  .geometric-shape:nth-child(3) {
+    bottom: 20%;
+    left: 20%;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(225deg, hsl(var(--primary)), transparent);
+    border-radius: 30%;
+    animation-delay: -10s;
+  }
+
+  .geometric-shape:nth-child(4) {
+    top: 30%;
+    right: 30%;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(315deg, hsl(var(--accent) / 0.5), transparent);
+    border-radius: 20%;
+    animation-delay: -7s;
+  }
+
+  @keyframes floatShape {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-20px) rotate(180deg);
+    }
+  }
+
+  /* Light mode adjustments */
+  .light .geometric-shape {
+    opacity: 0.05;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    body::before,
+    body::after {
+      opacity: 0.3;
+      animation-duration: 40s;
+    }
+    
+    .geometric-shape {
+      opacity: 0.03;
+      animation-duration: 25s;
+    }
+    
+    .geometric-shape:nth-child(1) {
+      width: 60px;
+      height: 60px;
+    }
+    
+    .geometric-shape:nth-child(2) {
+      width: 80px;
+      height: 80px;
+    }
+    
+    .geometric-shape:nth-child(3) {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    body::before,
+    body::after,
+    .geometric-shape {
+      animation: none;
+    }
+    
+    * {
+      transition: none !important;
+    }
   }
 
   /* Custom design system utilities */

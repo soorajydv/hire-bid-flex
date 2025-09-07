@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { setFilters, clearFilters } from '../../store/slices/jobsSlice';
@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { X, Filter } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const categories = [
   'All Categories',
@@ -33,6 +34,30 @@ export const JobFilters = ({ onApplyFilters }: JobFiltersProps) => {
   const filters = useAppSelector((state) => state.jobs.filters);
   const [isOpen, setIsOpen] = useState(false);
   const [localFilters, setLocalFilters] = useState(filters);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && isMobile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, isMobile]);
 
   const handleApplyFilters = () => {
     dispatch(setFilters(localFilters));
@@ -44,6 +69,7 @@ export const JobFilters = ({ onApplyFilters }: JobFiltersProps) => {
     const clearedFilters = {
       category: '',
       location: '',
+      budgetType: '',
       budgetMin: 0,
       budgetMax: 10000,
       urgent: false,
@@ -74,18 +100,37 @@ export const JobFilters = ({ onApplyFilters }: JobFiltersProps) => {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-lg font-semibold">Filter Jobs</CardTitle>
-        <Button 
-          variant="ghost" 
-          size="sm"
+    <>
+      {/* Mobile Overlay */}
+      {isMobile && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsOpen(false)}
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={cn(
+        "fixed lg:relative inset-y-0 left-0 z-50 w-80 lg:w-full",
+        "transform transition-transform duration-300 ease-in-out lg:transform-none",
+        "bg-background lg:bg-transparent",
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}>
+        <Card className={cn(
+          "h-full lg:h-auto border-0 lg:border shadow-xl lg:shadow-sm",
+          "rounded-none lg:rounded-lg overflow-y-auto"
+        )}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 sticky top-0 bg-background z-10 border-b lg:border-b-0">
+            <CardTitle className="text-lg font-semibold">Filter Jobs</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setIsOpen(false)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-6 pb-20 lg:pb-6">
         {/* Category */}
         <div className="space-y-2">
           <Label>Category</Label>
@@ -115,6 +160,25 @@ export const JobFilters = ({ onApplyFilters }: JobFiltersProps) => {
             onChange={(e) => updateLocalFilter('location', e.target.value)}
             placeholder="Enter location"
           />
+        </div>
+
+        {/* Budget Type */}
+        <div className="space-y-3">
+          <Label>Budget Type</Label>
+          <Select 
+            value={localFilters.budgetType || 'all'} 
+            onValueChange={(value) => updateLocalFilter('budgetType', value === 'all' ? '' : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All budget types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Budget Types</SelectItem>
+              <SelectItem value="fixed">Fixed Range</SelectItem>
+              <SelectItem value="hourly">Per Hour</SelectItem>
+              <SelectItem value="monthly">Per Month</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Budget Range */}
@@ -175,5 +239,7 @@ export const JobFilters = ({ onApplyFilters }: JobFiltersProps) => {
         </div>
       </CardContent>
     </Card>
+      </div>
+    </>
   );
 };

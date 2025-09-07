@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { useAppDispatch } from '../../hooks/useAppDispatch';
-import { placeBid } from '../../store/slices/bidsSlice';
-import { addNotification } from '../../store/slices/notificationsSlice';
-import { Job } from '../../store/slices/jobsSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, DollarSign, Clock, Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, DollarSign, MapPin, Clock, User } from 'lucide-react';
+import { useAppDispatch } from '../../hooks/useAppDispatch';
+import { placeBid } from '../../store/slices/bidsSlice';
+import { PageLoader } from '@/components/ui/loading-spinner';
+import { addNotification } from '../../store/slices/notificationsSlice';
+import { Job } from '../../store/slices/jobsSlice';
 import { toast } from '@/hooks/use-toast';
 
 interface PlaceBidModalProps {
@@ -27,34 +28,36 @@ export const PlaceBidModal = ({ job, isOpen, onClose }: PlaceBidModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const amount = parseFloat(bidAmount);
-    if (isNaN(amount) || amount <= 0) {
-      toast({
-        title: "Invalid bid amount",
-        description: "Please enter a valid bid amount.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (amount < job.budget.min || amount > job.budget.max) {
-      toast({
-        title: "Bid out of range",
-        description: `Bid must be between $${job.budget.min} and $${job.budget.max}.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
+    
     try {
+      const amount = parseFloat(bidAmount);
+      if (isNaN(amount) || amount <= 0) {
+        toast({
+          title: "Invalid bid amount",
+          description: "Please enter a valid bid amount.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (amount < job.budget.min || amount > job.budget.max) {
+        toast({
+          title: "Bid out of range",
+          description: `Bid must be between $${job.budget.min} and $${job.budget.max}.`,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       await dispatch(placeBid({
         jobId: job.id,
         amount,
         message,
-      })).unwrap();
-
+      }));
+      
       // Create notification for job poster (mock)
       dispatch(addNotification({
         type: 'bid_received',

@@ -1,18 +1,20 @@
-import { useEffect, useState } from 'react';
-import { useAppDispatch } from '../../hooks/useAppDispatch';
-import { useAppSelector } from '../../hooks/useAppSelector';
-import { fetchNotifications, markAsRead, markAllAsRead } from '../../store/slices/notificationsSlice';
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../../store/store';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Check, CheckCheck, Loader2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Bell, X, Trash2, CheckCircle, AlertCircle, Info, CheckCheck } from 'lucide-react';
+import { fetchNotifications, markAsRead, markAllAsRead } from '../../store/slices/notificationsSlice';
+import { useAppDispatch } from '../../hooks/useAppDispatch';
+import { PageLoader } from '@/components/ui/loading-spinner';
 import { formatDistanceToNow } from 'date-fns';
 
 export const NotificationCenter = () => {
   const dispatch = useAppDispatch();
-  const { notifications, unreadCount, loading } = useAppSelector((state) => state.notifications);
+  const { notifications, unreadCount, loading } = useSelector((state: RootState) => state.notifications);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -27,6 +29,16 @@ export const NotificationCenter = () => {
 
   const handleMarkAllAsRead = () => {
     dispatch(markAllAsRead());
+  };
+
+  const handleDeleteNotification = (notificationId: string) => {
+    // Mock delete - in real app would dispatch delete action
+    console.log('Delete notification:', notificationId);
+  };
+
+  const handleClearAll = () => {
+    // Mock clear all - in real app would dispatch clear action
+    console.log('Clear all notifications');
   };
 
   const getNotificationIcon = (type: string) => {
@@ -72,8 +84,7 @@ export const NotificationCenter = () => {
                 onClick={handleMarkAllAsRead}
                 className="text-xs"
               >
-                <CheckCheck className="w-4 h-4 mr-1" />
-                Mark all read
+                <CheckCheck className="w-4 h-4" /> Mark all read
               </Button>
             )}
           </div>
@@ -81,8 +92,8 @@ export const NotificationCenter = () => {
 
         <ScrollArea className="max-h-96">
           {loading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="w-6 h-6 animate-spin" />
+            <div className="p-4">
+              <PageLoader message="Loading notifications..." />
             </div>
           ) : notifications.length === 0 ? (
             <div className="text-center p-8 text-muted-foreground">
@@ -115,9 +126,9 @@ export const NotificationCenter = () => {
                       <p className="text-sm text-muted-foreground mt-1 leading-tight">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-2">
+                      <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                      </p>
+                      </span>
                     </div>
                   </div>
                 </div>

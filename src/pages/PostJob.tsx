@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/navigation/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import {
   Upload,
   Info 
 } from "lucide-react";
+import { PageLoader } from "@/components/ui/loading-spinner";
 
 const PostJob = () => {
   const [formData, setFormData] = useState({
@@ -20,11 +21,27 @@ const PostJob = () => {
     description: "",
     category: "",
     location: "",
+    budgetType: "fixed" as 'fixed' | 'hourly' | 'monthly',
     budgetMin: "",
     budgetMax: "",
+    budgetRate: "",
     deadline: "",
     attachments: []
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 600);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (pageLoading) {
+    return <PageLoader message="Loading job posting form..." />;
+  }
 
   const categories = [
     "Home Services",
@@ -39,7 +56,7 @@ const PostJob = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navbar />
       
       <main className="pt-8 pb-16">
@@ -121,27 +138,77 @@ const PostJob = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="budgetMin">Budget Min ($)</Label>
-                      <Input
-                        id="budgetMin"
-                        type="number"
-                        placeholder="50"
-                        value={formData.budgetMin}
-                        onChange={(e) => setFormData({...formData, budgetMin: e.target.value})}
-                      />
+                      <Label>Budget Type</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          type="button"
+                          variant={formData.budgetType === 'fixed' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setFormData({...formData, budgetType: 'fixed'})}
+                          className="text-xs"
+                        >
+                          Fixed Range
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={formData.budgetType === 'hourly' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setFormData({...formData, budgetType: 'hourly'})}
+                          className="text-xs"
+                        >
+                          Per Hour
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={formData.budgetType === 'monthly' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setFormData({...formData, budgetType: 'monthly'})}
+                          className="text-xs"
+                        >
+                          Per Month
+                        </Button>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="budgetMax">Budget Max ($)</Label>
-                      <Input
-                        id="budgetMax"
-                        type="number"
-                        placeholder="200"
-                        value={formData.budgetMax}
-                        onChange={(e) => setFormData({...formData, budgetMax: e.target.value})}
-                      />
-                    </div>
+
+                    {formData.budgetType === 'fixed' ? (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="budgetMin">Budget Min ($)</Label>
+                          <Input
+                            id="budgetMin"
+                            type="number"
+                            placeholder="50"
+                            value={formData.budgetMin}
+                            onChange={(e) => setFormData({...formData, budgetMin: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="budgetMax">Budget Max ($)</Label>
+                          <Input
+                            id="budgetMax"
+                            type="number"
+                            placeholder="200"
+                            value={formData.budgetMax}
+                            onChange={(e) => setFormData({...formData, budgetMax: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="budgetRate">
+                          Rate (${formData.budgetType === 'hourly' ? 'per hour' : 'per month'})
+                        </Label>
+                        <Input
+                          id="budgetRate"
+                          type="number"
+                          placeholder={formData.budgetType === 'hourly' ? '25' : '2500'}
+                          value={formData.budgetRate}
+                          onChange={(e) => setFormData({...formData, budgetRate: e.target.value})}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -193,9 +260,24 @@ const PostJob = () => {
                     <span className="text-sm">5% on completion</span>
                   </div>
                   <div className="border-t pt-4">
-                    <Button variant="hero" className="w-full" size="lg">
-                      <PlusCircle className="w-4 h-4 mr-2" />
-                      Post Job
+                    <Button 
+                      variant="hero" 
+                      className="w-full" 
+                      size="lg"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        setIsSubmitting(true);
+                        setTimeout(() => setIsSubmitting(false), 2000);
+                      }}
+                    >
+                      {isSubmitting ? (
+                        <PageLoader message="Posting job..." />
+                      ) : (
+                        <>
+                          <PlusCircle className="w-4 h-4 mr-2" />
+                          Post Job
+                        </>
+                      )}
                     </Button>
                   </div>
                 </CardContent>

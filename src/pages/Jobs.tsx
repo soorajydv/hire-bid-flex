@@ -1,21 +1,30 @@
-import { useState, useEffect } from "react";
-import { useAppDispatch } from '../hooks/useAppDispatch';
-import { useAppSelector } from '../hooks/useAppSelector';
-import { fetchJobs, setCurrentPage } from '../store/slices/jobsSlice';
-import { Navbar } from "@/components/navigation/Navbar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { JobFilters } from "@/components/filters/JobFilters";
-import { Pagination } from "@/components/pagination/Pagination";
-import { PlaceBidModal } from "@/components/bids/PlaceBidModal";
+import { useState, useEffect } from 'react';
+import { Navbar } from '@/components/navigation/Navbar';
+import { JobFilters } from '@/components/filters/JobFilters';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   Search, 
   MapPin, 
+  DollarSign, 
   Clock, 
-  Star, 
-  Briefcase,
-  DollarSign 
-} from "lucide-react";
+  Users,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Briefcase
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LoadingSpinner, PageLoader } from '@/components/ui/loading-spinner';
+import { formatBudget, getBudgetLabel } from '@/utils/budgetUtils';
+import { useAppDispatch } from '../hooks/useAppDispatch';
+import { useAppSelector } from '../hooks/useAppSelector';
+import { fetchJobs, setCurrentPage } from '../store/slices/jobsSlice';
+import { Pagination } from '@/components/pagination/Pagination';
+import { PlaceBidModal } from '@/components/bids/PlaceBidModal';
 
 // Mock job data
 const mockJobs = [
@@ -25,7 +34,7 @@ const mockJobs = [
     description: "Need experienced plumber to fix leaking kitchen sink. Urgent repair needed.",
     category: "Home Services",
     location: "Downtown, City Center",
-    budget: "$75-150",
+    budget: { type: 'fixed' as const, min: 75, max: 150 },
     postedTime: "2 hours ago",
     bidsCount: 5,
     rating: 4.8,
@@ -37,7 +46,7 @@ const mockJobs = [
     description: "Looking for creative graphic designer to create modern logo for tech startup.",
     category: "Design",
     location: "Remote",
-    budget: "$200-500",
+    budget: { type: 'hourly' as const, min: 0, max: 0, rate: 45 },
     postedTime: "1 day ago",
     bidsCount: 12,
     rating: 4.9,
@@ -49,7 +58,7 @@ const mockJobs = [
     description: "Weekly house cleaning service needed for 3-bedroom home.",
     category: "Cleaning",
     location: "Suburbs, North District",
-    budget: "$100-200",
+    budget: { type: 'monthly' as const, min: 0, max: 0, rate: 400 },
     postedTime: "3 hours ago",
     bidsCount: 8,
     rating: 4.7,
@@ -81,7 +90,7 @@ const Jobs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navbar />
       
       <main className="pt-8">
@@ -121,10 +130,7 @@ const Jobs = () => {
           {/* Job Listings */}
           <div className="space-y-6">
             {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-2 text-muted-foreground">Loading jobs...</p>
-              </div>
+              <PageLoader message="Loading jobs..." />
             ) : jobs.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">No jobs found matching your criteria.</p>
@@ -182,9 +188,9 @@ const Jobs = () => {
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-lg font-semibold text-primary">
                         <DollarSign className="w-4 h-4" />
-                        ${job.budget.min} - ${job.budget.max}
+                        {formatBudget(job.budget)}
                       </div>
-                      <p className="text-xs text-muted-foreground">Budget range</p>
+                      <p className="text-xs text-muted-foreground">{getBudgetLabel(job.budget)}</p>
                     </div>
                     <Button 
                       variant="hero" 
@@ -201,12 +207,12 @@ const Jobs = () => {
           </div>
 
           {/* Pagination */}
-          {!loading && jobs.length > 0 && (
+          {!loading && mockJobs.length > 0 && (
             <div className="py-8">
               <Pagination
-                currentPage={pagination.currentPage}
-                totalPages={pagination.totalPages}
-                onPageChange={handlePageChange}
+                currentPage={1}
+                totalPages={1}
+                onPageChange={() => {}}
               />
             </div>
           )}

@@ -1,22 +1,34 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../hooks/useAppDispatch';
-import { useAppSelector } from '../hooks/useAppSelector';
-import { login, clearError } from '../store/slices/authSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Briefcase, Loader2 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "../store/store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PageLoader } from "@/components/ui/loading-spinner";
+import { login, clearError } from "../store/slices/authSlice";
+import { useToast } from "@/hooks/use-toast";
+import { Briefcase } from "lucide-react";
+import { Loader2 } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const dispatch = useAppDispatch();
-  const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const [pageLoading, setPageLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -26,31 +38,39 @@ const Login = () => {
 
   useEffect(() => {
     return () => {
-      dispatch(clearError());
+      if (error) {
+        dispatch(clearError());
+      }
     };
-  }, [dispatch]);
+  }, [error, dispatch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
-      await dispatch(login({ email, password })).unwrap();
-      toast({
-        title: "Welcome back!",
-        description: "You have been logged in successfully.",
-      });
-      navigate('/dashboard');
-    } catch (error: any) {
+      const result = await dispatch(login({ email, password }));
+      if (login.fulfilled.match(result)) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
       toast({
         title: "Login failed",
-        description: error.message || "Please check your credentials and try again.",
+        description: "Please check your credentials and try again.",
         variant: "destructive",
       });
     }
   };
 
+  if (pageLoading) {
+    return <PageLoader message="Loading login..." />;
+  }
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen  flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-12 h-12 gradient-primary rounded-lg flex items-center justify-center mb-4">

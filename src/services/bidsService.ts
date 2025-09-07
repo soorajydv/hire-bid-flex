@@ -6,27 +6,57 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 let mockBids: Bid[] = [
   {
     id: '1',
-    jobId: '1',
-    bidderId: '2',
-    bidderName: 'Jane Smith',
-    amount: 120,
-    message: 'I have 10+ years of plumbing experience. Can start immediately.',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+    jobId: '2',
+    bidderId: 'user1',
+    bidderName: 'Sarah Wilson',
+    amount: 350,
+    message: 'I have 5+ years of graphic design experience. Can deliver high-quality logo within 3 days.',
+    status: 'accepted',
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    contactDetails: {
+      email: 'sarah.wilson@email.com',
+      phone: '+1 (555) 123-4567',
+      address: '123 Designer Ave, Creative District'
+    }
   },
   {
     id: '2',
-    jobId: '1',
-    bidderId: '3',
-    bidderName: 'Mike Johnson',
-    amount: 100,
-    message: 'Local plumber with excellent reviews. Available today.',
+    jobId: '5',
+    bidderId: 'user1',
+    bidderName: 'Sarah Wilson',
+    amount: 1200,
+    message: 'Professional landscaper with 8 years experience. Can start next week.',
+    status: 'accepted',
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    contactDetails: {
+      email: 'sarah.wilson@email.com',
+      phone: '+1 (555) 123-4567',
+      address: '123 Designer Ave, Creative District'
+    }
+  },
+  {
+    id: '3',
+    jobId: '4',
+    bidderId: 'user1',
+    bidderName: 'Sarah Wilson',
+    amount: 3500,
+    message: 'Full-stack developer with React/Node.js expertise. Portfolio available upon request.',
     status: 'pending',
-    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: '4',
+    jobId: '1',
+    bidderId: 'user1',
+    bidderName: 'Sarah Wilson',
+    amount: 125,
+    message: 'I can help with the plumbing repair. Available this weekend.',
+    status: 'pending',
+    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
   },
 ];
 
-let bidIdCounter = 3;
+let bidIdCounter = 5;
 
 export const bidsService = {
   async getJobBids(jobId: string) {

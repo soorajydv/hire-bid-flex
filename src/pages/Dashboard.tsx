@@ -7,6 +7,7 @@ import { Navbar } from "@/components/navigation/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { 
   Briefcase, 
   Users, 
@@ -14,7 +15,11 @@ import {
   Eye,
   MessageSquare,
   CheckCircle,
-  Clock
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  User
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -191,53 +196,102 @@ const Dashboard = () => {
               </div>
 
               <div className="space-y-4">
-                {currentUserBids.map((bid) => (
-                  <Card key={bid.id} className="card-elevated hover:shadow-strong transition-all duration-300 group">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              bid.status === 'accepted' 
-                                ? 'bg-success/20 text-success border border-success/30' 
-                                : bid.status === 'pending'
-                                ? 'bg-primary/20 text-primary border border-primary/30'
-                                : 'bg-muted/50 text-muted-foreground border border-muted'
-                            }`}>
-                              {bid.status === 'accepted' ? 'Accepted' : 'Pending'}
-                            </span>
-                            <span className="text-sm text-muted-foreground">to Job #{bid.jobId}</span>
-                          </div>
-                          <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
-                            Job #{bid.jobId}
-                          </h3>
-                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="w-4 h-4" />
-                              <span>Bid: ${bid.amount}</span>
+                {currentUserBids.map((bid) => {
+                  // Find the related job to get location
+                  const relatedJob = jobs.find(job => job.id === bid.jobId);
+                  
+                  return (
+                    <Card key={bid.id} className="card-elevated hover:shadow-strong transition-all duration-300 group">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Badge 
+                                variant={bid.status === 'accepted' ? 'default' : bid.status === 'pending' ? 'secondary' : 'destructive'}
+                                className={`${
+                                  bid.status === 'accepted' 
+                                    ? 'bg-success/20 text-success border border-success/30' 
+                                    : bid.status === 'pending'
+                                    ? 'bg-primary/20 text-primary border border-primary/30'
+                                    : 'bg-muted/50 text-muted-foreground border border-muted'
+                                }`}
+                              >
+                                {bid.status === 'accepted' ? 'Accepted' : bid.status === 'pending' ? 'Pending' : 'Rejected'}
+                              </Badge>
+                              <span className="text-sm text-muted-foreground">
+                                {relatedJob ? relatedJob.title : `Job #${bid.jobId}`}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              <span>{bid.createdAt}</span>
+                            
+                            <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                              {relatedJob ? relatedJob.title : `Job #${bid.jobId}`}
+                            </h3>
+                            
+                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                              {bid.message}
+                            </p>
+                            
+                            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="w-4 h-4" />
+                                <span>Bid: ${bid.amount}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                <span>{new Date(bid.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              {relatedJob && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>{relatedJob.location}</span>
+                                </div>
+                              )}
                             </div>
+                            
+                            {/* Contact Details - Only shown for accepted bids */}
+                            {bid.status === 'accepted' && bid.contactDetails && (
+                              <div className="mt-4 p-4 bg-success/5 border border-success/20 rounded-lg">
+                                <h4 className="font-semibold text-success mb-2 flex items-center gap-2">
+                                  <CheckCircle className="w-4 h-4" />
+                                  Client Contact Details
+                                </h4>
+                                <div className="grid md:grid-cols-2 gap-2 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <Mail className="w-4 h-4 text-muted-foreground" />
+                                    <span>{bid.contactDetails.email}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Phone className="w-4 h-4 text-muted-foreground" />
+                                    <span>{bid.contactDetails.phone}</span>
+                                  </div>
+                                  {bid.contactDetails.address && (
+                                    <div className="flex items-center gap-2 md:col-span-2">
+                                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                                      <span>{bid.contactDetails.address}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="border-primary/20 hover:bg-primary/10">
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Chat
-                          </Button>
-                          {bid.status === 'accepted' && (
-                            <Button variant="default" size="sm" className="bg-success hover:bg-success/90">
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Start Work
+                          
+                          <div className="flex gap-2 shrink-0">
+                            <Button variant="outline" size="sm" className="border-primary/20 hover:bg-primary/10">
+                              <MessageSquare className="w-4 h-4 mr-2" />
+                              Chat
                             </Button>
-                          )}
+                            {bid.status === 'accepted' && (
+                              <Button variant="default" size="sm" className="bg-success hover:bg-success/90">
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Start Work
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </TabsContent>
           </Tabs>

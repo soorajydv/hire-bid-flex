@@ -10,6 +10,12 @@ export interface Bid {
   message: string;
   status: 'pending' | 'accepted' | 'rejected';
   createdAt: string;
+  // Contact details revealed when bid is accepted
+  contactDetails?: {
+    email: string;
+    phone: string;
+    address?: string;
+  };
 }
 
 interface BidsState {
